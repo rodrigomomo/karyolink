@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cariotipador Impulsado por IA - Karyolink</title>
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de Fuente y Estilos de Tailwind --><style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro base */
+            /* Fondo no plano: Añade un sutil gradiente radial en las esquinas */
+            background-image: radial-gradient(at 0% 0%, rgba(30, 64, 175, 0.05) 0%, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(30, 64, 175, 0.05) 0%, transparent 50%);
+            scroll-behavior: smooth;
+        }
+        /* Estilos base para botones primarios (no usados en CTA de WhatsApp, pero se mantienen por si acaso) */
+        .btn-primary {
+            background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        /* Estilos para el efecto de tarjeta brillante */
+        .card-glow {
+            border: 1px solid #1f2937;
+            background-color: #111827;
+            transition: all 0.3s ease;
+        }
+        .card-glow:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+        }
+        
+        /* --- ESTILO DE BOTÓN PRINCIPAL (AZUL OSCURO/INDIGO) --- */
+        .btn-contact-neon {
+            /* Degradado de azul más oscuro (Indigo) */
+            background: linear-gradient(45deg, #3730a3, #4f46e5); /* Indigo 800 a 600 */
+            /* Sombra sutil de brillo más oscuro */
+            box-shadow: 0 0 15px rgba(63, 76, 190, 0.6), 0 0 5px rgba(63, 76, 190, 0.3); /* Usando un tono de Indigo */
+            color: white;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-contact-neon:hover {
+            /* Aumento de brillo y ligero desplazamiento */
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.8), 0 4px 10px rgba(79, 70, 229, 0.5); /* Indigo 600 */
+            transform: scale(1.02);
+        }
+
+        /* --- Estilos para la Tarjeta Flip Interactiva --- */
+        .flip-card-container {
+            perspective: 1000px;
+            height: 256px;
+        }
+        .flip-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer;
+        }
+        .flip-card.flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #1f2937;
+            background-color: #111827;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+            background-color: #1e40af;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Estilo para el mensaje de éxito */
+        #success-message {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #success-message.show {
+            opacity: 1;
+        }
+
+        /* Animación para el texto de "TOCA AQUÍ" */
+        @keyframes custom-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .animate-custom-pulse {
+            animation: custom-pulse 1.5s infinite ease-in-out;
+        }
+
+        /* Estilos para el carrusel de mockup */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .tab-button.active {
+            background-color: #3b82f6; /* Azul de Tailwind 500 */
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5);
+        }
+        .tab-button:not(.active):hover {
+            background-color: #1f2937; /* Gris oscuro para hover */
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Navbar --><header class="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-sm shadow-lg">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <!-- Logo/Nombre (Solo Icono) --><a href="#" class="flex items-center text-xl font-bold text-white tracking-widest" aria-label="Volver a la página de inicio: Cariotipador IA">
+                <!-- Icono de ADN/Cromosoma --><svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.468 9.24 5.235 7.6 5.344a6.666 6.666 0 00-4.664 6.784A6.666 6.666 0 007.6 18.656c1.64.109 3.232-.124 4.4-.897M12 6.253c1.168.773 2.76 1.006 4.4.897a6.666 6.666 0 014.664 6.784 6.666 6.666 0 01-4.664 6.784c-1.64.109-3.232-.124-4.4-.897M12 6.253V4m0 16v-2"></path></svg>
+            </a>
+            
+            <!-- Botón de Acción Principal (WhatsApp - AZUL OSCURO) --><a href="https://wa.me/34665241647" target="_blank" class="btn-contact-neon text-sm font-semibold px-4 py-2 rounded-lg text-white shadow-md flex items-center space-x-2">
+                <!-- Icono de WhatsApp (Inline SVG - BLANCO) --><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 448 512" fill="white">
+                    <path d="M380.9 97.1C339.4 55.6 283.6 32 224.2 32c-121.5 0-220 98.5-220 220 0 39.1 10.2 77.3 29.6 111L0 480l118.7-31c32.9 18 70 27 107.5 27.2h.1c121.7 0 220.2-98.7 220.2-220.3 0-58.4-23.2-114.6-67.6-159.1zM224.2 436c-27.5 0-54.2-7.8-77.9-22.9l-5.7-3.4-61.9 16.2 16.2-60.5-3.6-5.8c-15.7-25-23.7-53.1-23.7-82s8-57 23.7-82c44.8-71 113-116.5 190.5-116.5 44 0 86 17.5 117.4 48.8s48.8 73.5 48.8 117.4-17.5 86-48.8 117.4c-31.3 31.3-73.3 48.8-117.4 48.8zM345.9 313c-2.4-1.2-14.7-7.3-17-8.1-2.4-.8-4.2-1.2-6-.1-1.8 1.1-6.9 8.1-8.5 9.7s-3.3 1.8-6.1.8c-3.6-1.1-15-5.6-28.5-17.6-10.5-9.4-17.6-21-19.7-24.5-2.1-3.5-.2-5.4 1-7.5 1.1-2.1 2.4-3.5 3.6-5.4s.8-3.5.4-5.4c-.4-1.9-5.9-14.3-8.1-19.6-2.1-5.3-4.3-4.5-6.1-4.5-1.8 0-4.2-.3-6-.3s-6.1.1-9.3 4.8c-3.2 4.7-12 11.7-12 28.5s12.3 33 14 35.3c1.7 2.3 24.3 39.3 58.7 54.7 8.5 3.8 15.2 6.1 20.4 7.8 7.3 2.5 14 2.1 19.3 1.3 5.9-.9 18.2-7.4 20.8-14.7 2.6-7.3 2.6-13.6 1.8-14.7z"/>
+                </svg>
+                <span>Contacta</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        
+        <!-- Sección 1: Ventajas Clave (Why Karyolink?) - AHORA ES LA PRIMERA SECCIÓN DE CONTENIDO --><section id="ventajas" class="py-20 bg-gray-900 border-b border-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl sm:text-4xl font-bold text-center mb-12">
+                    Supera los desafíos del diagnóstico actual en Citogenética.
+                </h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Ventaja 1: Velocidad (vs. Lentitud Diagnóstica) --><div class="card-glow p-6 rounded-xl text-center">
+                        <svg class="w-10 h-10 mx-auto text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <h3 class="text-xl font-semibold mb-3 text-blue-300">Máximo Rendimiento</h3>
+                        <p class="text-gray-400">Elimina el techo productivo limitado. La IA automatiza la clasificación, permitiendo procesar más casos sin aumentar las horas de trabajo.</p>
+                    </div>
+
+                    <!-- Ventaja 2: Precisión (vs. Minimizar Errores) --><div class="card-glow p-6 rounded-xl text-center">
+                        <svg class="w-10 h-10 mx-auto text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-9.618 4.016A11.955 11.955 0 0012 21c4.97 0 9.23-2.48 11.618-6.016z"></path></svg>
+                        <h3 class="text-xl font-semibold mb-3 text-blue-300">Fiabilidad Aumentada</h3>
+                        <p class="text-gray-400">Nuestra IA, entrenada con +10,000 muestras, minimiza errores de revisión y mejora la fiabilidad de todos tus diagnósticos.</p>
+                    </div>
+
+                    <!-- Ventaja 3: Clasificación en Minutos vs. Espera --><div class="card-glow p-6 rounded-xl text-center">
+                        <svg class="w-10 h-10 mx-auto text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        <h3 class="text-xl font-semibold mb-3 text-blue-300">Clasificación en Minutos</h3>
+                        <p class="text-gray-400">Karyolink clasifica tus metafases en minutos, acelerando tu proceso interno de diagnóstico.</p>
+                    </div>
+
+                    <!-- Ventaja 4: Tarjeta Flip (vs. Fatiga Visual/Concentración) --><div class="flip-card-container h-64">
+                        <div id="flip-card-4" class="flip-card">
+                            <!-- CARA FRONTAL --><div class="flip-card-front card-glow p-6 rounded-xl text-center">
+                                <svg class="w-10 h-10 mx-auto text-blue-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2-3-.895-3-2 1.343-2 3-2zM8 12h8m-8 4h8"></path></svg>
+                                <h3 class="text-xl font-semibold mb-3 text-blue-300">Mitiga la Fatiga Visual</h3>
+                                <p class="text-gray-400">
+                                    Al automatizar el proceso repetitivo, eliminamos la fatiga visual y la alta concentración requerida en tareas tediosas. 
+                                </p>
+                                <!-- Flecha de interacción pulsante --><div class="mt-2 text-xl font-extrabold text-red-500 animate-custom-pulse">
+                                    <svg class="w-6 h-6 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                            
+                            <!-- CARA TRASERA --><div class="flip-card-back text-center">
+                                <svg class="w-10 h-10 mx-auto text-white mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <h3 class="text-xl font-semibold mb-3 text-white">Focus Humano</h3>
+                                <p class="text-blue-200">El citogenetista pasa de clasificar a validar. Esto garantiza el control final por parte del experto y reduce la dependencia de la concentración constante.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Sección 2: Héroe/Principal - AHORA ES LA SEGUNDA SECCIÓN --><section id="hero" class="pt-16 pb-16 text-center bg-gray-900 border-b border-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4 tracking-tighter">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">Cariotipador Asistido por IA</span>
+                </h1>
+                <p class="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
+                    El software de Karyolink clasifica tu cariotipo en minutos, aumentando la velocidad de diagnóstico y permitiendo a tu laboratorio duplicar su capacidad de procesamiento.
+                </p>
+                <!-- Botón de Acción Principal (WhatsApp - AZUL OSCURO) --><div class="flex justify-center mb-16">
+                    <a href="https://wa.me/34665241647" target="_blank" class="btn-contact-neon font-bold text-lg px-8 py-3 rounded-xl shadow-lg flex items-center space-x-2 text-white">
+                        <!-- Icono de WhatsApp (Inline SVG - BLANCO) --><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 448 512" fill="white">
+                            <path d="M380.9 97.1C339.4 55.6 283.6 32 224.2 32c-121.5 0-220 98.5-220 220 0 39.1 10.2 77.3 29.6 111L0 480l118.7-31c32.9 18 70 27 107.5 27.2h.1c121.7 0 220.2-98.7 220.2-220.3 0-58.4-23.2-114.6-67.6-159.1zM224.2 436c-27.5 0-54.2-7.8-77.9-22.9l-5.7-3.4-61.9 16.2 16.2-60.5-3.6-5.8c-15.7-25-23.7-53.1-23.7-82s8-57 23.7-82c44.8-71 113-116.5 190.5-116.5 44 0 86 17.5 117.4 48.8s48.8 73.5 48.8 117.4-17.5 86-48.8 117.4c-31.3 31.3-73.3 48.8-117.4 48.8zM345.9 313c-2.4-1.2-14.7-7.3-17-8.1-2.4-.8-4.2-1.2-6-.1-1.8 1.1-6.9 8.1-8.5 9.7s-3.3 1.8-6.1.8c-3.6-1.1-15-5.6-28.5-17.6-10.5-9.4-17.6-21-19.7-24.5-2.1-3.5-.2-5.4 1-7.5 1.1-2.1 2.4-3.5 3.6-5.4s.8-3.5.4-5.4c-.4-1.9-5.9-14.3-8.1-19.6-2.1-5.3-4.3-4.5-6.1-4.5-1.8 0-4.2-.3-6-.3s-6.1.1-9.3 4.8c-3.2 4.7-12 11.7-12 28.5s12.3 33 14 35.3c1.7 2.3 24.3 39.3 58.7 54.7 8.5 3.8 15.2 6.1 20.4 7.8 7.3 2.5 14 2.1 19.3 1.3 5.9-.9 18.2-7.4 20.8-14.7 2.6-7.3 2.6-13.6 1.8-14.7z"/>
+                        </svg>
+                        <span>Contacta con el equipo</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Sección 3: Credibilidad / Cifras Clave --><section id="credibilidad" class="py-12 bg-gray-700/50 border-b border-gray-700">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-around items-center text-center space-y-8 md:space-y-0">
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-4xl font-extrabold text-blue-400">+25</p>
+                        <p class="text-lg text-gray-300">Años de experiencia en Citogenética</p>
+                    </div>
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-4xl font-extrabold text-blue-400">+10,000</p>
+                        <p class="text-lg text-gray-300">Fotos reales para el entrenamiento de IA</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-extrabold text-blue-400">+90%</p>
+                        <p class="text-lg text-gray-300">Tasa de fiabilidad y precisión</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 4: Carrusel/Mockup de Proceso de Diagnóstico --><section id="proceso" class="py-20 bg-gray-800 border-b border-gray-700">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+                <h2 class="text-3xl sm:text-4xl font-bold text-center mb-12">
+                    Visualiza el Flujo de Trabajo
+                </h2>
+                <div class="bg-gray-800/80 p-4 sm:p-6 rounded-xl shadow-2xl border border-gray-700">
+                    <!-- Pestañas de Navegación -->
+                    <div class="flex flex-wrap justify-center mb-6 border-b border-gray-700/50">
+                        <button id="tab-1" class="tab-button active flex-1 sm:flex-grow-0 sm:px-6 py-2 m-1 rounded-lg text-sm font-medium transition duration-300">
+                            1. Subida y Detección
+                        </button>
+                        <button id="tab-2" class="tab-button flex-1 sm:flex-grow-0 sm:px-6 py-2 m-1 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition duration-300">
+                            2. Clasificación IA
+                        </button>
+                        <button id="tab-3" class="tab-button flex-1 sm:flex-grow-0 sm:px-6 py-2 m-1 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition duration-300">
+                            3. Diagnóstico Final
+                        </button>
+                    </div>
+
+                    <!-- Contenido del Carrusel/Mockup -->
+                    <div id="tab-content-container" class="relative min-h-[400px]">
+                        
+                        <!-- Pestaña 1: Detección y Recorte -->
+                        <div id="content-1" class="tab-content active rounded-lg overflow-hidden border border-gray-600 shadow-xl">
+                            <!-- Placeholder de imagen representativa -->
+                            <img src="https://placehold.co/1024x450/111827/4f46e5?text=Paso%201%3A%20Subida%20y%20Detecci%C3%B3n%20Autom%C3%A1tica" 
+                                alt="Mockup de interfaz mostrando la subida de una imagen de metafase con cromosomas detectados y resaltados en azul." 
+                                class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-sm text-left">
+                                <p class="font-semibold text-blue-300">Subida y Detección Automática</p>
+                                <p class="text-sm text-gray-400">La IA identifica y recorta individualmente cada cromosoma en segundos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña 2: Cariotipo Clasificado -->
+                        <div id="content-2" class="tab-content rounded-lg overflow-hidden border border-gray-600 shadow-xl">
+                            <!-- Placeholder de imagen representativa -->
+                            <img src="https://placehold.co/1024x450/111827/3b82f6?text=Paso%202%3A%20Cariotipo%20Clasificado%20por%20IA" 
+                                alt="Mockup de interfaz mostrando un cariotipo completamente clasificado y ordenado en pares homólogos." 
+                                class="w-full h-full object-cover">
+                             <div class="absolute bottom-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-sm text-left">
+                                <p class="font-semibold text-blue-300">Cariotipo Clasificado y Ordenado</p>
+                                <p class="text-sm text-gray-400">El motor de Karyolink ordena y clasifica los 46 cromosomas en pares en tiempo real.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña 3: Anomalías Resaltadas y Reporte ISCN -->
+                        <div id="content-3" class="tab-content rounded-lg overflow-hidden border border-gray-600 shadow-xl">
+                            <!-- Placeholder de imagen representativa -->
+                            <img src="https://placehold.co/1024x450/111827/ef4444?text=Paso%203%3A%20Anomal%C3%ADas%20y%20Reporte%20ISCN" 
+                                alt="Mockup de interfaz mostrando una anomalía (ej. translocación) resaltada en rojo en la interfaz junto con la notación ISCN generada." 
+                                class="w-full h-full object-cover">
+                             <div class="absolute bottom-0 left-0 right-0 p-4 bg-gray-900/80 backdrop-blur-sm text-left">
+                                <p class="font-semibold text-blue-300">Anomalías Resaltadas y Reporte ISCN</p>
+                                <p class="text-sm text-gray-400">Marcado de translocaciones y generación automática del informe final con notación ISCN.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Sección 5: Características Detalladas / Flujo de Trabajo --><section id="caracteristicas" class="py-20 bg-gray-900 border-b border-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl sm:text-4xl font-bold text-center mb-16 text-white">
+                    Flujo de Trabajo en Minutos
+                </h2>
+                
+                <div class="space-y-16">
+                    
+                    <!-- Característica 1: Clasificación en Minutos --><div class="md:flex md:items-center justify-center">
+                        <div class="md:w-full max-w-2xl mb-6 md:mb-0 text-center">
+                            <span class="text-sm font-semibold text-blue-400 uppercase tracking-wider">Paso 1: Subida de Imágenes y Clasificación IA</span>
+                            <h3 class="text-2xl font-bold mb-3">Tu Muestra Lista en el Acto</h3>
+                            <p class="text-gray-400">
+                                Karyolink utiliza redes neuronales profundas entrenadas con más de 10,000 fotos de muestras reales. Al subir las imágenes, el motor realiza la clasificación en minutos, permitiendo al técnico empezar a validar inmediatamente.
+                            </p>
+                            <ul class="list-disc list-inside text-gray-500 mt-4 space-y-2 inline-block text-left">
+                                <li>Detección de banda G de alta resolución.</li>
+                                <li>Clasificación en minutos en pares homólogos.</li>
+                                <li>Corrección automática de solapamientos.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Característica 2: Detección de Anomalías --><div class="md:flex md:items-center justify-center">
+                        <div class="md:w-full max-w-2xl mb-6 md:mb-0 text-center">
+                            <span class="text-sm font-semibold text-blue-400 uppercase tracking-wider">Paso 2: Análisis y Validación Final</span>
+                            <h3 class="text-2xl font-bold mb-3">Notación ISCN y Validación sin Esfuerzo</h3>
+                            <p class="text-gray-400">
+                                Una vez clasificados, el sistema marca translocaciones, deleciones, duplicaciones e inversiones, presentando el informe final con notación ISCN en minutos. El técnico se enfoca únicamente en la validación y el diagnóstico experto.
+                            </p>
+                            <ul class="list-disc list-inside text-gray-500 mt-4 space-y-2 inline-block text-left">
+                                <li>Generación de Notación ISCN 2024.</li>
+                                <li>Herramientas de revisión y edición manual para la validación del experto.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 6: Llamada a la Acción (CTA) / Contacto con Formulario --><section id="contacto" class="py-20 bg-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-xl text-center">
+                <h2 class="text-4xl font-extrabold mb-4">
+                    Contacta con Nuestro Equipo
+                </h2>
+                <p class="text-xl text-gray-400 mb-6">
+                    Rellena el formulario o contáctanos directamente por WhatsApp para una demostración inmediata.
+                </p>
+                
+                <!-- Botón de WhatsApp CLAVE (AZUL OSCURO) --><a href="https://wa.me/34665241647" target="_blank" class="btn-contact-neon text-xl font-bold px-8 py-4 rounded-xl shadow-lg transition duration-300 flex items-center justify-center space-x-3 mb-8">
+                    <!-- Icono de WhatsApp (Inline SVG - BLANCO) --><svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 448 512" fill="white">
+                        <path d="M380.9 97.1C339.4 55.6 283.6 32 224.2 32c-121.5 0-220 98.5-220 220 0 39.1 10.2 77.3 29.6 111L0 480l118.7-31c32.9 18 70 27 107.5 27.2h.1c121.7 0 220.2-98.7 220.2-220.3 0-58.4-23.2-114.6-67.6-159.1zM224.2 436c-27.5 0-54.2-7.8-77.9-22.9l-5.7-3.4-61.9 16.2 16.2-60.5-3.6-5.8c-15.7-25-23.7-53.1-23.7-82s8-57 23.7-82c44.8-71 113-116.5 190.5-116.5 44 0 86 17.5 117.4 48.8s48.8 73.5 48.8 117.4-17.5 86-48.8 117.4c-31.3 31.3-73.3 48.8-117.4 48.8zM345.9 313c-2.4-1.2-14.7-7.3-17-8.1-2.4-.8-4.2-1.2-6-.1-1.8 1.1-6.9 8.1-8.5 9.7s-3.3 1.8-6.1.8c-3.6-1.1-15-5.6-28.5-17.6-10.5-9.4-17.6-21-19.7-24.5-2.1-3.5-.2-5.4 1-7.5 1.1-2.1 2.4-3.5 3.6-5.4s.8-3.5.4-5.4c-.4-1.9-5.9-14.3-8.1-19.6-2.1-5.3-4.3-4.5-6.1-4.5-1.8 0-4.2-.3-6-.3s-6.1.1-9.3 4.8c-3.2 4.7-12 11.7-12 28.5s12.3 33 14 35.3c1.7 2.3 24.3 39.3 58.7 54.7 8.5 3.8 15.2 6.1 20.4 7.8 7.3 2.5 14 2.1 19.3 1.3 5.9-.9 18.2-7.4 20.8-14.7 2.6-7.3 2.6-13.6 1.8-14.7z"/>
+                    </svg>
+                    <span>Contacta con el equipo</span>
+                </a>
+                
+                <!-- Correo Electrónico Prominente y Clicable --><div class="mb-8 p-4 bg-gray-700 rounded-xl border border-gray-600 shadow-lg">
+                    <p class="text-sm text-gray-300 font-medium mb-1">O si lo prefieres, por email:</p>
+                    <a href="mailto:Karyolink20@gmail.com?subject=Consulta%20sobre%20Karyolink%20desde%20la%20Web" 
+                       class="text-lg sm:text-xl font-extrabold text-blue-400 hover:text-blue-300 transition duration-300 inline-block">
+                        Karyolink20@gmail.com
+                    </a>
+                </div>
+
+
+                <!-- Formulario de Contacto (como alternativa) --><div class="bg-gray-700 p-8 rounded-xl shadow-2xl space-y-6">
+                     <p class="text-xl font-semibold text-white">O usa nuestro formulario de consulta:</p>
+                    <!-- Mensaje de éxito (Inicialmente oculto) --><div id="success-message" class="p-4 bg-green-500/20 text-green-300 rounded-lg border border-green-500/50 text-base" role="alert">
+                        ¡Mensaje de demostración enviado! Revisa la bandeja de entrada de tu email para la respuesta de nuestro equipo.
+                    </div>
+
+                    <form id="contact-form" class="space-y-4">
+                        <!-- Campo Nombre --><div>
+                            <label for="name" class="block text-left text-sm font-medium text-gray-300 mb-1">Nombre Completo</label>
+                            <input type="text" id="name" required placeholder="Tu nombre y apellido"
+                                class="w-full p-3 rounded-lg bg-gray-600 border border-gray-500 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Campo Email --><div>
+                            <label for="email" class="block text-left text-sm font-medium text-gray-300 mb-1">Correo Electrónico</label>
+                            <input type="email" id="email" required placeholder="tu.correo@ejemplo.com"
+                                class="w-full p-3 rounded-lg bg-gray-600 border border-gray-500 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Campo Mensaje --><div>
+                            <label for="message" class="block text-left text-sm font-medium text-gray-300 mb-1">Mensaje/Consulta</label>
+                            <textarea id="message" rows="4" required placeholder="Me gustaría una demostración y saber los precios para mi laboratorio..."
+                                class="w-full p-3 rounded-lg bg-gray-600 border border-gray-500 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        
+                        <!-- Botón de Envío (type="button" para simular el envío sin redirigir) --><button type="button" id="submit-mock-button"
+                           class="w-full inline-block btn-primary text-xl font-bold px-8 py-3 rounded-xl shadow-lg transition duration-300 hover:opacity-90">
+                            Solicitar Información
+                        </button>
+                    </form>
+                    
+                    <p class="text-xs text-gray-500 mt-4">Nota: Este formulario simula el envío. Para un contacto inmediato, usa WhatsApp.</p>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+    
+    <!-- Footer --><footer class="bg-gray-900 border-t border-gray-800 py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>&copy; 2025 Karyolink. Todos los derechos reservados. | Cariotipador Asistido por IA.</p>
+            <div class="mt-4 space-x-4">
+                <a href="#" class="hover:text-blue-400 text-sm">Política de Privacidad</a>
+                <a href="#" class="hover:text-blue-400 text-sm">Términos de Servicio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- LÓGICA DE INTERACCIÓN ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const submitMockButton = document.getElementById('submit-mock-button');
+            const successMessage = document.getElementById('success-message');
+            const contactForm = document.getElementById('contact-form');
+            const flipCard = document.getElementById('flip-card-4');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+
+            // LÓGICA DE LA TARJETA FLIP
+            if (flipCard) {
+                flipCard.addEventListener('click', function() {
+                    this.classList.toggle('flipped');
+                });
+            }
+
+            // LÓGICA DEL CARRUSEL/MOCKUP POR PESTAÑAS
+            function switchTab(tabId) {
+                // Desactivar todos los botones y contenidos
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-gray-300');
+                    btn.classList.remove('text-white');
+                });
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                // Activar el botón y contenido seleccionados
+                const newActiveButton = document.getElementById(tabId);
+                const newActiveContent = document.getElementById('content-' + tabId.split('-')[1]);
+                
+                if (newActiveButton && newActiveContent) {
+                    newActiveButton.classList.add('active');
+                    newActiveButton.classList.remove('text-gray-300');
+                    newActiveButton.classList.add('text-white');
+                    newActiveContent.classList.add('active');
+                }
+            }
+
+            // Asignar listeners a los botones de pestaña
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchTab(button.id);
+                });
+            });
+
+            // Inicializar la primera pestaña
+            switchTab('tab-1');
+
+
+            // LÓGICA DEL BOTÓN DE SIMULACIÓN DE ENVÍO
+            if (submitMockButton) {
+                submitMockButton.addEventListener('click', function(e) {
+                    // Verificar si los campos requeridos están llenos
+                    if (!contactForm.checkValidity()) {
+                        // Disparar la validación nativa del navegador para mostrar errores
+                        contactForm.reportValidity();
+                        return;
+                    }
+
+                    // Simulación de envío
+                    console.log("Simulando envío de consulta...");
+                    
+                    // 1. Mostrar mensaje de éxito
+                    successMessage.classList.add('show');
+
+                    // 2. Limpiar formulario
+                    contactForm.reset();
+
+                    // 3. Ocultar mensaje después de un tiempo
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                });
+            }
+        });
+
+        // Función para manejar el scroll suave al hacer clic en enlaces internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            // Se excluyen los enlaces que van a WhatsApp para que funcionen como enlaces externos normales
+            if (anchor.getAttribute('href').startsWith('https://wa.me')) {
+                return; 
+            }
+            
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+    </script>
+</body>
+</html>
